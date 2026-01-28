@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+package-lock.json
+npm-debug.log
+yarn-error.log
+
+# Build outputs
+www/
+dist/
+build/
+
+# Android build
+android/app/build/
+android/.gradle/
+android/local.properties
+.gradle/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Gradle
+gradle.properties.local
+
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride
+*.log

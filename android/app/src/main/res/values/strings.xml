@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Space Invaders</string>
+    <string name="title_activity_main">Space Invaders</string>
+    <string name="package_name">com.spaceinvaders.game</string>
+    <string name="custom_url_scheme">com.spaceinvaders.game</string>
+</resources>

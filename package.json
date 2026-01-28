@@ -1,0 +1,26 @@
+{
+  "name": "space-invaders-app",
+  "version": "1.0.0",
+  "description": "Classic Space Invaders game with fireworks and bonus lives",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx http-server -c-1 -o",
+    "build": "echo 'No build step needed for this project'",
+    "android:build": "npx @capacitor/cli build android",
+    "android:run": "npx @capacitor/cli run android",
+    "android:open": "npx @capacitor/cli open android"
+  },
+  "keywords": [
+    "game",
+    "space-invaders",
+    "canvas",
+    "retro"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/cli": "^6.0.0",
+    "@capacitor/core": "^6.0.0"
+  }
+}

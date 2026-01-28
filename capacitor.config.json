@@ -1,0 +1,16 @@
+{
+  "appId": "com.spaceinvaders.game",
+  "appName": "Space Invaders",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "useLegacyBridge": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}
