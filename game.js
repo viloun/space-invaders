@@ -18,6 +18,164 @@ const GAME_STATE = {
     WAVE_COMPLETE: 'waveComplete',
 };
 
+// Sound Manager - Web Audio API synthesized retro arcade sounds
+class SoundManager {
+    constructor() {
+        this.audioContext = null;
+        this.soundEnabled = true;
+        this.initAudioContext();
+    }
+
+    initAudioContext() {
+        if (!this.audioContext) {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.audioContext = new AudioContext();
+            } catch (e) {
+                console.log('Web Audio API not supported');
+                this.soundEnabled = false;
+            }
+        }
+    }
+
+    playSound(type) {
+        if (!this.soundEnabled || !this.audioContext) return;
+
+        switch (type) {
+            case 'shoot':
+                this.playShootSound();
+                break;
+            case 'enemyDeath':
+                this.playEnemyDeathSound();
+                break;
+            case 'waveComplete':
+                this.playWaveCompleteSound();
+                break;
+            case 'gameOver':
+                this.playGameOverSound();
+                break;
+            case 'bonusLife':
+                this.playBonusLifeSound();
+                break;
+        }
+    }
+
+    playShootSound() {
+        const now = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+        osc.type = 'square';
+
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+        osc.start(now);
+        osc.stop(now + 0.05);
+    }
+
+    playEnemyDeathSound() {
+        const now = this.audioContext.currentTime;
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+
+        osc.connect(gain);
+        gain.connect(this.audioContext.destination);
+
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+        osc.type = 'triangle';
+
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0, now + 0.1);
+
+        osc.start(now);
+        osc.stop(now + 0.1);
+    }
+
+    playWaveCompleteSound() {
+        const now = this.audioContext.currentTime;
+        const frequencies = [523, 659, 784, 523]; // C5, E5, G5, C5 - triumphant chord
+        
+        frequencies.forEach((freq, i) => {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+
+            osc.frequency.setValueAtTime(freq, now);
+            osc.type = 'sine';
+
+            const startTime = now + (i * 0.05);
+            gain.gain.setValueAtTime(0.08, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+
+            osc.start(startTime);
+            osc.stop(startTime + 0.3);
+        });
+    }
+
+    playGameOverSound() {
+        const now = this.audioContext.currentTime;
+        const frequencies = [392, 349, 330, 294]; // G4, F4, E4, D4 - descending sad chord
+        
+        frequencies.forEach((freq, i) => {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+
+            osc.frequency.setValueAtTime(freq, now);
+            osc.type = 'sine';
+
+            const startTime = now + (i * 0.1);
+            gain.gain.setValueAtTime(0.1, startTime);
+            gain.gain.exponentialRampToValueAtTime(0, startTime + 0.4);
+
+            osc.start(startTime);
+            osc.stop(startTime + 0.4);
+        });
+    }
+
+    playBonusLifeSound() {
+        const now = this.audioContext.currentTime;
+        // Ascending arpeggio: C5, D5, E5, G5, C6
+        const frequencies = [523, 587, 659, 784, 1047];
+        
+        frequencies.forEach((freq, i) => {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
+
+            osc.frequency.setValueAtTime(freq, now);
+            osc.type = 'sine';
+
+            const startTime = now + (i * 0.05);
+            gain.gain.setValueAtTime(0.1, startTime);
+            gain.gain.exponentialRampToValueAtTime(0, startTime + 0.25);
+
+            osc.start(startTime);
+            osc.stop(startTime + 0.25);
+        });
+    }
+
+    toggleSound() {
+        this.soundEnabled = !this.soundEnabled;
+        return this.soundEnabled;
+    }
+}
+
+const soundManager = new SoundManager();
+
 // High Score Management
 class HighScoreManager {
     constructor() {
@@ -98,6 +256,9 @@ class SpaceInvadersGame {
         
         // Spawn initial enemies
         this.spawnWave();
+        
+        // Play wave complete sound for wave 1 start
+        soundManager.playSound('waveComplete');
     }
 
     setupInputHandlers() {
@@ -227,6 +388,7 @@ class SpaceInvadersGame {
         // Check for game over
         if (this.enemies.length === 0) {
             this.wave++;
+            soundManager.playSound('waveComplete');
             this.spawnWave();
         }
         
@@ -269,10 +431,14 @@ class SpaceInvadersGame {
                     this.bullets.splice(i, 1);
                     this.score += enemy.points;
                     
+                    // Play enemy death sound
+                    soundManager.playSound('enemyDeath');
+                    
                     // Check for life reward every 2000 points
                     if (this.score >= this.lastLifeRewardScore + 2000) {
                         this.lives++;
                         this.lastLifeRewardScore += 2000;
+                        soundManager.playSound('bonusLife');
                         this.createLifeRewardEffect();
                     }
                     
@@ -372,6 +538,7 @@ class SpaceInvadersGame {
 
     endGame() {
         this.state = GAME_STATE.GAME_OVER;
+        soundManager.playSound('gameOver');
         document.getElementById('gameOverScreen').classList.add('show');
         document.getElementById('finalScore').textContent = `Final Score: ${this.score}`;
         document.getElementById('wavesDefeated').textContent = `Waves Defeated: ${this.wave - 1}`;
@@ -448,6 +615,9 @@ class Player {
         const spreadVelocity = 2; // Horizontal velocity for spreading
         bullets.push(new Bullet(leftGunX, this.y - BULLET_HEIGHT, -spreadVelocity));
         bullets.push(new Bullet(rightGunX, this.y - BULLET_HEIGHT, spreadVelocity));
+        
+        // Play shoot sound
+        soundManager.playSound('shoot');
     }
 
     draw(ctx, wave = 1) {
@@ -786,4 +956,18 @@ window.addEventListener('load', () => {
 
     new SpaceInvadersGame();
 });
+
+// Sound Manager Toggle Function
+function toggleSoundManager() {
+    const enabled = soundManager.toggleSound();
+    const btn = document.getElementById('soundToggleBtn');
+    
+    if (enabled) {
+        btn.textContent = '🔊 SOUND ON';
+        btn.classList.remove('off');
+    } else {
+        btn.textContent = '🔇 SOUND OFF';
+        btn.classList.add('off');
+    }
+}
 
