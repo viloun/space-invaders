@@ -114,6 +114,9 @@ class SoundManager {
                 case 'bonusLife':
                     this.playBonusLifeSound();
                     break;
+                case 'powerUp':
+                    this.playPowerUpSound();
+                    break;
             }
             
             // Process next sound in queue
@@ -249,6 +252,34 @@ class SoundManager {
         }
     }
 
+    playPowerUpSound() {
+        try {
+            const now = this.audioContext.currentTime;
+            // High-pitched power-up sound: ascending high tones
+            const frequencies = [784, 987, 1047, 1175]; // G5, B5, C6, D6
+            
+            frequencies.forEach((freq, i) => {
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
+
+                osc.frequency.setValueAtTime(freq, now);
+                osc.type = 'sine';
+
+                const startTime = now + (i * 0.04);
+                gain.gain.setValueAtTime(0.12, startTime);
+                gain.gain.exponentialRampToValueAtTime(0, startTime + 0.2);
+
+                osc.start(startTime);
+                osc.stop(startTime + 0.2);
+            });
+        } catch (e) {
+            // Silently handle any audio context errors
+        }
+    }
+
     toggleSound() {
         this.soundEnabled = !this.soundEnabled;
         return this.soundEnabled;
@@ -256,6 +287,132 @@ class SoundManager {
 }
 
 const soundManager = new SoundManager();
+
+// PowerUp Types and Configuration
+const POWERUP_TYPES = {
+    SHIELD: {
+        name: 'Shield',
+        icon: '🛡️',
+        duration: 8000, // 8 seconds in milliseconds
+        color: '#00ccff',
+        glowColor: '#00ccff',
+    },
+    RAPID_FIRE: {
+        name: 'Rapid Fire',
+        icon: '⚡',
+        duration: 6000, // 6 seconds
+        color: '#ffaa00',
+        glowColor: '#ffaa00',
+    },
+    MULTI_SHOT: {
+        name: 'Multi-Shot',
+        icon: '🔥',
+        duration: 7000, // 7 seconds
+        color: '#ff0080',
+        glowColor: '#ff0080',
+    },
+};
+
+// PowerUp Item Class - Drops from enemies
+class PowerUp {
+    constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.width = 30;
+        this.height = 30;
+        this.type = type;
+        this.vx = (Math.random() - 0.5) * 2; // Random horizontal drift
+        this.vy = 1.5; // Fall speed
+        this.rotation = 0;
+        this.rotationSpeed = 0.1;
+    }
+
+    update() {
+        this.y += this.vy;
+        this.x += this.vx;
+        this.rotation += this.rotationSpeed;
+        
+        // Bounce off walls
+        if (this.x < 0 || this.x + this.width > GAME_WIDTH) {
+            this.vx *= -1;
+        }
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x + this.width / 2, this.y + this.height / 2);
+        ctx.rotate(this.rotation);
+        
+        const config = POWERUP_TYPES[this.type];
+        
+        // Draw glow
+        ctx.fillStyle = config.glowColor;
+        ctx.shadowColor = config.glowColor;
+        ctx.shadowBlur = 15;
+        ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+        
+        // Draw icon background
+        ctx.fillStyle = config.color;
+        ctx.globalAlpha = 0.8;
+        ctx.fillRect(-this.width / 2 + 2, -this.height / 2 + 2, this.width - 4, this.height - 4);
+        ctx.globalAlpha = 1;
+        
+        // Draw icon text
+        ctx.fillStyle = '#0a0e27';
+        ctx.font = 'bold 18px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(config.icon, 0, 0);
+        
+        ctx.shadowBlur = 0;
+        ctx.restore();
+    }
+}
+
+// PowerUp Manager - Handles active powerups on the player
+class PowerUpManager {
+    constructor(player) {
+        this.player = player;
+        this.activePowerUps = {};
+        this.powerUpStartTimes = {};
+    }
+
+    addPowerUp(type) {
+        this.activePowerUps[type] = true;
+        this.powerUpStartTimes[type] = Date.now();
+    }
+
+    update() {
+        const now = Date.now();
+        
+        for (let type in this.activePowerUps) {
+            const duration = POWERUP_TYPES[type].duration;
+            const elapsed = now - this.powerUpStartTimes[type];
+            
+            if (elapsed > duration) {
+                delete this.activePowerUps[type];
+                delete this.powerUpStartTimes[type];
+            }
+        }
+    }
+
+    hasPowerUp(type) {
+        return this.activePowerUps[type] === true;
+    }
+
+    getRemainingTime(type) {
+        if (!this.hasPowerUp(type)) return 0;
+        const now = Date.now();
+        const duration = POWERUP_TYPES[type].duration;
+        const elapsed = now - this.powerUpStartTimes[type];
+        return Math.max(0, duration - elapsed);
+    }
+
+    clear() {
+        this.activePowerUps = {};
+        this.powerUpStartTimes = {};
+    }
+}
 
 // High Score Management
 class HighScoreManager {
@@ -327,6 +484,10 @@ class SpaceInvadersGame {
         this.bullets = [];
         this.enemyBullets = [];
         this.particles = [];
+        this.powerUps = [];
+        
+        // Power-up system
+        this.powerUpManager = new PowerUpManager(this.player);
         
         // Input handling
         this.keys = {};
@@ -349,7 +510,7 @@ class SpaceInvadersGame {
             
             if (e.key === ' ') {
                 e.preventDefault();
-                this.player.shoot(this.bullets, this.wave);
+                this.player.shoot(this.bullets, this.wave, this.powerUpManager);
             }
         });
         
@@ -359,6 +520,14 @@ class SpaceInvadersGame {
         
         // Mobile touch controls setup
         this.setupTouchControls();
+        
+        // Rapid fire interval handler
+        this.lastShotTime = 0;
+        this.shootInterval = setInterval(() => {
+            if (this.state === GAME_STATE.PLAYING && this.powerUpManager.hasPowerUp('RAPID_FIRE')) {
+                this.player.shoot(this.bullets, this.wave, this.powerUpManager);
+            }
+        }, 100); // Rapid fire: every 100ms
     }
 
     setupTouchControls() {
@@ -398,7 +567,7 @@ class SpaceInvadersGame {
         // Shoot button - Fire
         shootBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            this.player.shoot(this.bullets, this.wave);
+            this.player.shoot(this.bullets, this.wave, this.powerUpManager);
         });
         
         // Also support mouse events for desktop testing on touchscreen devices
@@ -417,7 +586,7 @@ class SpaceInvadersGame {
         });
         
         shootBtn.addEventListener('mousedown', () => {
-            this.player.shoot(this.bullets, this.wave);
+            this.player.shoot(this.bullets, this.wave, this.powerUpManager);
         });
     }
 
@@ -451,6 +620,10 @@ class SpaceInvadersGame {
             this.player.x += PLAYER_SPEED;
         }
         
+        // Update power-ups
+        this.powerUpManager.update();
+        this.updatePowerUps();
+        
         // Update bullets
         this.updateBullets();
         
@@ -476,6 +649,28 @@ class SpaceInvadersGame {
         
         if (this.lives <= 0) {
             this.endGame();
+        }
+    }
+
+    updatePowerUps() {
+        // Update powerup positions
+        for (let i = this.powerUps.length - 1; i >= 0; i--) {
+            const powerUp = this.powerUps[i];
+            powerUp.update();
+            
+            // Remove if fallen off screen
+            if (powerUp.y > GAME_HEIGHT) {
+                this.powerUps.splice(i, 1);
+                continue;
+            }
+            
+            // Check collision with player
+            if (this.checkCollision(powerUp, this.player)) {
+                this.powerUpManager.addPowerUp(powerUp.type);
+                this.powerUps.splice(i, 1);
+                soundManager.playSound('powerUp');
+                this.createPowerUpCollectEffect(powerUp.x, powerUp.y);
+            }
         }
     }
 
@@ -526,6 +721,13 @@ class SpaceInvadersGame {
                         this.createLifeRewardEffect();
                     }
                     
+                    // Randomly drop powerups (20% chance)
+                    if (Math.random() < 0.2) {
+                        const powerUpTypes = Object.keys(POWERUP_TYPES);
+                        const randomType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
+                        this.powerUps.push(new PowerUp(enemy.x + ENEMY_WIDTH / 2, enemy.y, randomType));
+                    }
+                    
                     this.createExplosion(enemy.x + ENEMY_WIDTH / 2, enemy.y + ENEMY_HEIGHT / 2);
                     break;
                 }
@@ -541,6 +743,22 @@ class SpaceInvadersGame {
             if (bullet.y > GAME_HEIGHT) {
                 this.enemyBullets.splice(i, 1);
                 continue;
+            }
+            
+            // Check collision with shield
+            if (this.powerUpManager.hasPowerUp('SHIELD')) {
+                const shieldSize = PLAYER_WIDTH + 20;
+                const shieldX = this.player.x + PLAYER_WIDTH / 2;
+                const shieldY = this.player.y + PLAYER_HEIGHT / 2;
+                const bulletDist = Math.sqrt(
+                    Math.pow(bullet.x - shieldX, 2) + Math.pow(bullet.y - shieldY, 2)
+                );
+                
+                if (bulletDist < shieldSize / 2) {
+                    this.enemyBullets.splice(i, 1);
+                    this.createExplosion(bullet.x, bullet.y);
+                    continue;
+                }
             }
             
             // Check collision with player
@@ -621,6 +839,18 @@ class SpaceInvadersGame {
         }
     }
 
+    createPowerUpCollectEffect(x, y) {
+        // Create sparkly particles when collecting powerup
+        for (let i = 0; i < 16; i++) {
+            const angle = (i / 16) * Math.PI * 2;
+            const velocity = {
+                x: Math.cos(angle) * 4,
+                y: Math.sin(angle) * 4,
+            };
+            this.particles.push(new FireworksParticle(x, y, velocity, 'cyan'));
+        }
+    }
+
     endGame() {
         this.state = GAME_STATE.GAME_OVER;
         soundManager.playSound('gameOver');
@@ -653,10 +883,35 @@ class SpaceInvadersGame {
         
         // Draw game objects
         this.player.draw(this.ctx, this.wave);
+        
+        // Draw shield if active
+        if (this.powerUpManager.hasPowerUp('SHIELD')) {
+            this.drawShield();
+        }
+        
         this.bullets.forEach(bullet => bullet.draw(this.ctx));
         this.enemies.forEach(enemy => enemy.draw(this.ctx));
         this.enemyBullets.forEach(bullet => bullet.draw(this.ctx));
+        this.powerUps.forEach(powerUp => powerUp.draw(this.ctx));
         this.particles.forEach(particle => particle.draw(this.ctx));
+    }
+
+    drawShield() {
+        const shieldSize = PLAYER_WIDTH + 20;
+        const shieldX = this.player.x - 10;
+        const shieldY = this.player.y - 10;
+        
+        this.ctx.strokeStyle = '#00ccff';
+        this.ctx.shadowColor = '#00ccff';
+        this.ctx.shadowBlur = 15;
+        this.ctx.lineWidth = 3;
+        
+        // Draw circle shield around player
+        this.ctx.beginPath();
+        this.ctx.arc(shieldX + PLAYER_WIDTH / 2, shieldY + PLAYER_HEIGHT / 2, shieldSize / 2, 0, Math.PI * 2);
+        this.ctx.stroke();
+        
+        this.ctx.shadowBlur = 0;
     }
 
     gameLoop() {
@@ -671,6 +926,17 @@ class SpaceInvadersGame {
         document.getElementById('wave').textContent = this.wave;
         document.getElementById('lives').textContent = this.lives;
         document.getElementById('difficulty').textContent = this.difficulty.name;
+        
+        // Update powerup display
+        const powerupDisplay = document.getElementById('powerUps');
+        if (powerupDisplay) {
+            const activePowerUps = [];
+            for (let type in this.powerUpManager.activePowerUps) {
+                const remaining = Math.ceil(this.powerUpManager.getRemainingTime(type) / 1000);
+                activePowerUps.push(`${POWERUP_TYPES[type].icon} ${remaining}s`);
+            }
+            powerupDisplay.textContent = activePowerUps.length > 0 ? activePowerUps.join('  ') : '';
+        }
     }
 }
 
@@ -684,7 +950,7 @@ class Player {
         this.wave = 1;
     }
 
-    shoot(bullets, wave = 1) {
+    shoot(bullets, wave = 1, powerUpManager = null) {
         // Dual guns - shoot from left and right sides
         // Gun spread increases with waves: wave 1-2 = 1/4 and 3/4, wave 3+ spreads further
         let gunSpread = 0.25; // Default spread for waves 1-2
@@ -699,8 +965,17 @@ class Player {
         
         // Bullets spread outward: left gun shoots left, right gun shoots right
         const spreadVelocity = 2; // Horizontal velocity for spreading
-        bullets.push(new Bullet(leftGunX, this.y - BULLET_HEIGHT, -spreadVelocity));
-        bullets.push(new Bullet(rightGunX, this.y - BULLET_HEIGHT, spreadVelocity));
+        
+        if (powerUpManager && powerUpManager.hasPowerUp('MULTI_SHOT')) {
+            // Multi-shot: shoot 3 bullets - left, center, and right
+            bullets.push(new Bullet(leftGunX, this.y - BULLET_HEIGHT, -spreadVelocity));
+            bullets.push(new Bullet(this.x + this.width / 2 - BULLET_WIDTH / 2, this.y - BULLET_HEIGHT, 0));
+            bullets.push(new Bullet(rightGunX, this.y - BULLET_HEIGHT, spreadVelocity));
+        } else {
+            // Normal dual shot
+            bullets.push(new Bullet(leftGunX, this.y - BULLET_HEIGHT, -spreadVelocity));
+            bullets.push(new Bullet(rightGunX, this.y - BULLET_HEIGHT, spreadVelocity));
+        }
         
         // Play shoot sound
         soundManager.playSound('shoot');
