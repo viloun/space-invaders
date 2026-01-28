@@ -465,7 +465,7 @@ const highScoreManager = new HighScoreManager();
 
 // Main Game Class
 class SpaceInvadersGame {
-    constructor(difficulty = DIFFICULTIES.NORMAL) {
+     constructor(difficulty = DIFFICULTIES.NORMAL) {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         
@@ -477,6 +477,9 @@ class SpaceInvadersGame {
         this.gameTime = 0;
         this.lastLifeRewardScore = 0;
         this.difficulty = difficulty;
+        
+        // Bullet progression system - start with 1 bullet
+        this.bulletLevel = 1; // 1 = single center, 2 = dual spread, 3+ = wide spread
         
         // Game objects
         this.player = new Player(GAME_WIDTH / 2 - PLAYER_WIDTH / 2, GAME_HEIGHT - 50);
@@ -510,7 +513,7 @@ class SpaceInvadersGame {
             
             if (e.key === ' ') {
                 e.preventDefault();
-                this.player.shoot(this.bullets, this.wave, this.powerUpManager);
+                this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
             }
         });
         
@@ -525,7 +528,7 @@ class SpaceInvadersGame {
         this.lastShotTime = 0;
         this.shootInterval = setInterval(() => {
             if (this.state === GAME_STATE.PLAYING && this.powerUpManager.hasPowerUp('RAPID_FIRE')) {
-                this.player.shoot(this.bullets, this.wave, this.powerUpManager);
+                this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
             }
         }, 100); // Rapid fire: every 100ms
     }
@@ -567,7 +570,7 @@ class SpaceInvadersGame {
         // Shoot button - Fire
         shootBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            this.player.shoot(this.bullets, this.wave, this.powerUpManager);
+            this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
         });
         
         // Also support mouse events for desktop testing on touchscreen devices
@@ -586,7 +589,7 @@ class SpaceInvadersGame {
         });
         
         shootBtn.addEventListener('mousedown', () => {
-            this.player.shoot(this.bullets, this.wave, this.powerUpManager);
+            this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
         });
     }
 
@@ -643,6 +646,16 @@ class SpaceInvadersGame {
         // Check for game over
         if (this.enemies.length === 0) {
             this.wave++;
+            
+            // Progression: Unlock bullet levels at specific waves
+            if (this.wave === 2 && this.bulletLevel < 2) {
+                this.bulletLevel = 2; // Unlock dual shot at wave 2
+                this.createBulletUpgradeEffect();
+            } else if (this.wave === 5 && this.bulletLevel < 3) {
+                this.bulletLevel = 3; // Unlock spread shot at wave 5
+                this.createBulletUpgradeEffect();
+            }
+            
             soundManager.playSound('waveComplete');
             this.spawnWave();
         }
@@ -851,6 +864,22 @@ class SpaceInvadersGame {
         }
     }
 
+    createBulletUpgradeEffect() {
+        // Create special effect for bullet level upgrade
+        const centerX = GAME_WIDTH / 2;
+        const centerY = GAME_HEIGHT / 2;
+        
+        // Gold burst for upgrade
+        for (let i = 0; i < 32; i++) {
+            const angle = (i / 32) * Math.PI * 2;
+            const velocity = {
+                x: Math.cos(angle) * 5,
+                y: Math.sin(angle) * 5,
+            };
+            this.particles.push(new FireworksParticle(centerX, centerY, velocity, 'gold'));
+        }
+    }
+
     endGame() {
         this.state = GAME_STATE.GAME_OVER;
         soundManager.playSound('gameOver');
@@ -927,6 +956,17 @@ class SpaceInvadersGame {
         document.getElementById('lives').textContent = this.lives;
         document.getElementById('difficulty').textContent = this.difficulty.name;
         
+        // Update bullet level display
+        const bulletDisplay = document.getElementById('bulletLevel');
+        if (bulletDisplay) {
+            const levelLabels = {
+                1: '● Single',
+                2: '●● Dual',
+                3: '●●● Spread'
+            };
+            bulletDisplay.textContent = `SHOT: ${levelLabels[this.bulletLevel] || 'Single'}`;
+        }
+        
         // Update powerup display
         const powerupDisplay = document.getElementById('powerUps');
         if (powerupDisplay) {
@@ -950,31 +990,33 @@ class Player {
         this.wave = 1;
     }
 
-    shoot(bullets, wave = 1, powerUpManager = null) {
-        // Dual guns - shoot from left and right sides
-        // Gun spread increases with waves: wave 1-2 = 1/4 and 3/4, wave 3+ spreads further
-        let gunSpread = 0.25; // Default spread for waves 1-2
+    shoot(bullets, wave = 1, powerUpManager = null, bulletLevel = 1) {
+        const centerGunX = this.x + this.width / 2 - BULLET_WIDTH / 2;
+        const spreadVelocity = 2;
         
-        if (wave >= 2) {
-            // Progressive spread: wave 2 = 0.15/0.85, wave 3 = 0.1/0.9, etc.
-            gunSpread = Math.max(0.1, 0.25 - (wave - 2) * 0.05);
-        }
-        
-        const leftGunX = this.x + gunSpread * this.width - BULLET_WIDTH / 2;
-        const rightGunX = this.x + (1 - gunSpread) * this.width - BULLET_WIDTH / 2;
-        
-        // Bullets spread outward: left gun shoots left, right gun shoots right
-        const spreadVelocity = 2; // Horizontal velocity for spreading
-        
+        // Bullet level determines shot pattern
         if (powerUpManager && powerUpManager.hasPowerUp('MULTI_SHOT')) {
-            // Multi-shot: shoot 3 bullets - left, center, and right
+            // Multi-shot powerup: triple shot regardless of level
+            const leftGunX = this.x + 0.25 * this.width - BULLET_WIDTH / 2;
+            const rightGunX = this.x + 0.75 * this.width - BULLET_WIDTH / 2;
             bullets.push(new Bullet(leftGunX, this.y - BULLET_HEIGHT, -spreadVelocity));
-            bullets.push(new Bullet(this.x + this.width / 2 - BULLET_WIDTH / 2, this.y - BULLET_HEIGHT, 0));
+            bullets.push(new Bullet(centerGunX, this.y - BULLET_HEIGHT, 0));
             bullets.push(new Bullet(rightGunX, this.y - BULLET_HEIGHT, spreadVelocity));
+        } else if (bulletLevel >= 3) {
+            // Level 3+: Wide spread dual shot
+            const waveSpread = Math.max(0.1, 0.25 - (wave - 2) * 0.05);
+            const leftGunX = this.x + waveSpread * this.width - BULLET_WIDTH / 2;
+            const rightGunX = this.x + (1 - waveSpread) * this.width - BULLET_WIDTH / 2;
+            bullets.push(new Bullet(leftGunX, this.y - BULLET_HEIGHT, -spreadVelocity));
+            bullets.push(new Bullet(rightGunX, this.y - BULLET_HEIGHT, spreadVelocity));
+        } else if (bulletLevel === 2) {
+            // Level 2: Dual shot centered
+            const offset = 8;
+            bullets.push(new Bullet(centerGunX - offset, this.y - BULLET_HEIGHT, -spreadVelocity * 0.5));
+            bullets.push(new Bullet(centerGunX + offset, this.y - BULLET_HEIGHT, spreadVelocity * 0.5));
         } else {
-            // Normal dual shot
-            bullets.push(new Bullet(leftGunX, this.y - BULLET_HEIGHT, -spreadVelocity));
-            bullets.push(new Bullet(rightGunX, this.y - BULLET_HEIGHT, spreadVelocity));
+            // Level 1: Single center shot
+            bullets.push(new Bullet(centerGunX, this.y - BULLET_HEIGHT, 0));
         }
         
         // Play shoot sound
