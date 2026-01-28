@@ -338,16 +338,14 @@
 
         /* Leaderboard */
         .leaderboard {
-            position: absolute;
-            top: 20px;
-            right: 20px;
             background: rgba(10, 14, 39, 0.95);
             border: 2px solid #00ff41;
             padding: 15px;
             border-radius: 8px;
             z-index: 100;
-            max-width: 300px;
+            max-width: 400px;
             box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
+            margin-top: 20px;
         }
 
         .leaderboard-title {
@@ -398,10 +396,7 @@
         }
 
         .show-leaderboard-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            padding: 8px 15px;
+            padding: 10px 20px;
             background: rgba(0, 255, 65, 0.2);
             border: 2px solid #00ff41;
             color: #00ff41;
@@ -410,6 +405,9 @@
             border-radius: 5px;
             z-index: 99;
             display: none;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
         }
 
         .show-leaderboard-btn:hover {
@@ -419,10 +417,7 @@
 
         /* Sound Toggle Button */
         .sound-toggle-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            padding: 8px 15px;
+            padding: 10px 20px;
             background: rgba(0, 255, 65, 0.2);
             border: 2px solid #00ff41;
             color: #00ff41;
@@ -431,7 +426,8 @@
             border-radius: 5px;
             z-index: 99;
             font-weight: bold;
-            font-size: 1.1em;
+            font-size: 1em;
+            transition: all 0.3s ease;
         }
 
         .sound-toggle-btn:hover {
@@ -441,6 +437,14 @@
 
         .sound-toggle-btn.off {
             opacity: 0.5;
+        }
+
+        /* Game Controls Container */
+        .game-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 15px;
         }
 
         /* Difficulty Selection Modal */
@@ -554,21 +558,26 @@
 
         <div style="position: relative; width: 800px; height: 600px;">
             <canvas id="gameCanvas" width="800" height="600"></canvas>
-            <button class="sound-toggle-btn" id="soundToggleBtn" onclick="toggleSoundManager()">🔊 SOUND ON</button>
             <div class="game-over" id="gameOverScreen">
                 <h2>GAME OVER</h2>
                 <p id="finalScore">Final Score: 0</p>
                 <p id="wavesDefeated">Waves Defeated: 0</p>
                 <button onclick="location.reload()">Play Again</button>
             </div>
-            <!-- Leaderboard -->
-            <div class="leaderboard" id="leaderboard" style="display: none;">
-                <div class="leaderboard-title">TOP SCORES</div>
-                <ul class="leaderboard-list" id="leaderboardList">
-                    <!-- Populated by JavaScript -->
-                </ul>
-            </div>
-            <button class="show-leaderboard-btn" id="showLeaderboardBtn">Show Scores</button>
+        </div>
+
+        <!-- Control Buttons Below Canvas -->
+        <div class="game-controls">
+            <button class="sound-toggle-btn" id="soundToggleBtn" onclick="toggleSoundManager()">🔊 SOUND ON</button>
+            <button class="show-leaderboard-btn" id="showLeaderboardBtn" onclick="toggleLeaderboard()">Show Scores</button>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="leaderboard" id="leaderboard" style="display: none;">
+            <div class="leaderboard-title">TOP SCORES</div>
+            <ul class="leaderboard-list" id="leaderboardList">
+                <!-- Populated by JavaScript -->
+            </ul>
         </div>
 
         <!-- Name Entry Modal -->
