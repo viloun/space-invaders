@@ -52,6 +52,7 @@ const GAME_STATE = {
     PLAYING: 'playing',
     GAME_OVER: 'gameOver',
     WAVE_COMPLETE: 'waveComplete',
+    PAUSED: 'paused',
 };
 
 // Sound Manager - Web Audio API synthesized retro arcade sounds
@@ -554,8 +555,9 @@ class SpaceInvadersGame {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         
-        // Game state
+         // Game state
         this.state = GAME_STATE.PLAYING;
+        this.isPaused = false; // Pause state
         this.score = 0;
         this.lives = 3;
         this.wave = 1;
@@ -606,6 +608,12 @@ class SpaceInvadersGame {
             if (e.key === ' ') {
                 e.preventDefault();
                 this.bulletsFired += this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
+            }
+            
+            // P key for pause/resume
+            if (e.key.toLowerCase() === 'p') {
+                e.preventDefault();
+                this.togglePause();
             }
         });
         
@@ -1000,7 +1008,34 @@ class SpaceInvadersGame {
         }
     }
 
+    togglePause() {
+        // Can only pause during active gameplay
+        if (this.state !== GAME_STATE.PLAYING) return;
+        
+        this.isPaused = !this.isPaused;
+        const pauseModal = document.getElementById('pauseModal');
+        
+        if (this.isPaused) {
+            // Show pause screen
+            if (pauseModal) {
+                pauseModal.classList.add('show');
+            }
+        } else {
+            // Hide pause screen
+            if (pauseModal) {
+                pauseModal.classList.remove('show');
+            }
+        }
+    }
+
+    resumeGame() {
+        if (this.isPaused) {
+            this.togglePause();
+        }
+    }
+
     draw() {
+
         // Clear canvas
         this.ctx.fillStyle = '#0a0e27';
         this.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
@@ -1023,12 +1058,42 @@ class SpaceInvadersGame {
             this.drawShield();
         }
         
-        this.bullets.forEach(bullet => bullet.draw(this.ctx));
+         this.bullets.forEach(bullet => bullet.draw(this.ctx));
         this.enemies.forEach(enemy => enemy.draw(this.ctx));
         this.enemyBullets.forEach(bullet => bullet.draw(this.ctx));
         this.powerUps.forEach(powerUp => powerUp.draw(this.ctx));
         this.particles.forEach(particle => particle.draw(this.ctx));
+        
+        // Draw pause overlay if paused
+        if (this.isPaused) {
+            this.drawPauseOverlay();
+        }
     }
+
+    drawPauseOverlay() {
+        // Semi-transparent overlay
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        
+        // "PAUSED" text
+        this.ctx.fillStyle = '#00ff41';
+        this.ctx.font = 'bold 60px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.shadowColor = '#00ff41';
+        this.ctx.shadowBlur = 20;
+        this.ctx.fillText('PAUSED', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 40);
+        
+        // Instructions
+        this.ctx.font = '20px Courier New';
+        this.ctx.fillStyle = '#00ccff';
+        this.ctx.shadowColor = '#00ccff';
+        this.ctx.shadowBlur = 10;
+        this.ctx.fillText('Press P to Resume', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 40);
+        
+        this.ctx.shadowBlur = 0;
+    }
+
 
     drawShield() {
         const shieldSize = PLAYER_WIDTH + 20;
@@ -1049,7 +1114,10 @@ class SpaceInvadersGame {
     }
 
     gameLoop() {
-        this.update();
+        // Skip update if paused, but still draw and render UI
+        if (!this.isPaused) {
+            this.update();
+        }
         this.draw();
         this.updateUI();
         requestAnimationFrame(this.gameLoop);
@@ -1484,7 +1552,7 @@ window.addEventListener('load', () => {
 // Start game with selected difficulty
 function startGame(difficulty) {
     document.getElementById('difficultyModal').style.display = 'none';
-    new SpaceInvadersGame(difficulty);
+    window.currentGame = new SpaceInvadersGame(difficulty);
 }
 
 // Sound Manager Toggle Function
