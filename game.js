@@ -18,6 +18,55 @@ const GAME_STATE = {
     WAVE_COMPLETE: 'waveComplete',
 };
 
+// High Score Management
+class HighScoreManager {
+    constructor() {
+        this.storageKey = 'spaceInvadersHighScores';
+        this.maxScores = 10;
+        this.loadScores();
+    }
+
+    loadScores() {
+        const stored = localStorage.getItem(this.storageKey);
+        this.scores = stored ? JSON.parse(stored) : [];
+    }
+
+    saveScores() {
+        localStorage.setItem(this.storageKey, JSON.stringify(this.scores));
+    }
+
+    addScore(name, score) {
+        const timestamp = new Date().toISOString();
+        const entry = { name, score, timestamp };
+        
+        this.scores.push(entry);
+        this.scores.sort((a, b) => b.score - a.score);
+        this.scores = this.scores.slice(0, this.maxScores);
+        
+        this.saveScores();
+        return this.isHighScore(score);
+    }
+
+    isHighScore(score) {
+        if (this.scores.length < this.maxScores) return true;
+        return score > this.scores[this.scores.length - 1].score;
+    }
+
+    getScores() {
+        return this.scores;
+    }
+
+    getHighScoreRank(score) {
+        for (let i = 0; i < this.scores.length; i++) {
+            if (score > this.scores[i].score) return i + 1;
+        }
+        return this.scores.length + 1;
+    }
+}
+
+const highScoreManager = new HighScoreManager();
+
+
 // Main Game Class
 class SpaceInvadersGame {
     constructor() {
@@ -326,6 +375,13 @@ class SpaceInvadersGame {
         document.getElementById('gameOverScreen').classList.add('show');
         document.getElementById('finalScore').textContent = `Final Score: ${this.score}`;
         document.getElementById('wavesDefeated').textContent = `Waves Defeated: ${this.wave - 1}`;
+        
+        // Check if this is a high score
+        if (highScoreManager.isHighScore(this.score)) {
+            showHighScoreModal(this.score);
+        } else {
+            updateLeaderboardDisplay();
+        }
     }
 
     draw() {
@@ -628,8 +684,106 @@ class FireworksParticle {
     }
 }
 
-// Initialize game
+// High Score Functions
+function showHighScoreModal(score) {
+    document.getElementById('newScoreDisplay').textContent = `Score: ${score}`;
+    document.getElementById('playerName').value = '';
+    document.getElementById('playerName').focus();
+    document.getElementById('nameEntryModal').classList.add('show');
+}
+
+function submitHighScore() {
+    const name = document.getElementById('playerName').value.trim();
+    if (!name) {
+        alert('Please enter your name!');
+        return;
+    }
+    
+    const score = parseInt(document.getElementById('newScoreDisplay').textContent.split(': ')[1]);
+    highScoreManager.addScore(name, score);
+    
+    document.getElementById('nameEntryModal').classList.remove('show');
+    updateLeaderboardDisplay();
+    showLeaderboard();
+}
+
+function skipHighScore() {
+    document.getElementById('nameEntryModal').classList.remove('show');
+    updateLeaderboardDisplay();
+}
+
+function updateLeaderboardDisplay() {
+    const scores = highScoreManager.getScores();
+    const leaderboardList = document.getElementById('leaderboardList');
+    
+    leaderboardList.innerHTML = '';
+    
+    if (scores.length === 0) {
+        leaderboardList.innerHTML = '<li class="leaderboard-entry" style="color: #00aa22;">No scores yet</li>';
+        return;
+    }
+    
+    scores.forEach((entry, index) => {
+        const li = document.createElement('li');
+        li.className = 'leaderboard-entry';
+        
+        // Add medal colors for top 3
+        if (index === 0) li.classList.add('top1');
+        else if (index === 1) li.classList.add('top2');
+        else if (index === 2) li.classList.add('top3');
+        
+        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+        const date = new Date(entry.timestamp).toLocaleDateString();
+        
+        li.innerHTML = `
+            <span class="leaderboard-name">${medal} ${entry.name}</span>
+            <span class="leaderboard-score">${entry.score}</span>
+        `;
+        li.title = `Score on ${date}`;
+        
+        leaderboardList.appendChild(li);
+    });
+}
+
+function showLeaderboard() {
+    const leaderboard = document.getElementById('leaderboard');
+    const showBtn = document.getElementById('showLeaderboardBtn');
+    
+    if (leaderboard.style.display === 'none') {
+        leaderboard.style.display = 'block';
+        showBtn.style.display = 'none';
+    } else {
+        leaderboard.style.display = 'none';
+        showBtn.style.display = 'block';
+    }
+}
+
+function toggleLeaderboard() {
+    const leaderboard = document.getElementById('leaderboard');
+    const showBtn = document.getElementById('showLeaderboardBtn');
+    
+    if (leaderboard.style.display === 'none') {
+        updateLeaderboardDisplay();
+        leaderboard.style.display = 'block';
+        showBtn.style.display = 'none';
+    } else {
+        leaderboard.style.display = 'none';
+        showBtn.style.display = 'block';
+    }
+}
+
+// Initialize leaderboard on page load
 window.addEventListener('load', () => {
+    updateLeaderboardDisplay();
+    const scores = highScoreManager.getScores();
+    if (scores.length > 0) {
+        document.getElementById('leaderboard').style.display = 'block';
+    } else {
+        document.getElementById('showLeaderboardBtn').style.display = 'block';
+    }
+    
+    // Initialize game
+
     new SpaceInvadersGame();
 });
 
