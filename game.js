@@ -463,6 +463,91 @@ class HighScoreManager {
 const highScoreManager = new HighScoreManager();
 
 
+// Statistics Manager Class - tracks lifetime game statistics
+class StatisticsManager {
+    constructor() {
+        this.storageKey = 'spaceInvadersStats';
+        this.loadStats();
+    }
+
+    loadStats() {
+        const stored = localStorage.getItem(this.storageKey);
+        if (stored) {
+            this.stats = JSON.parse(stored);
+        } else {
+            this.stats = {
+                gamesPlayed: 0,
+                bestWave: 0,
+                totalScore: 0,
+                totalPowerupsCollected: 0,
+                totalPlaytime: 0, // in seconds
+                totalBulletsFired: 0,
+                totalEnemiesKilled: 0,
+                lastGameStats: null
+            };
+        }
+    }
+
+    saveStats() {
+        localStorage.setItem(this.storageKey, JSON.stringify(this.stats));
+    }
+
+    recordGameEnd(gameStats) {
+        this.stats.gamesPlayed++;
+        this.stats.bestWave = Math.max(this.stats.bestWave, gameStats.wave);
+        this.stats.totalScore += gameStats.score;
+        this.stats.totalPowerupsCollected += gameStats.powerupsCollected;
+        this.stats.totalPlaytime += gameStats.playtime;
+        this.stats.totalBulletsFired += gameStats.bulletsFired;
+        this.stats.totalEnemiesKilled += gameStats.enemiesKilled;
+        this.stats.lastGameStats = {
+            score: gameStats.score,
+            wave: gameStats.wave,
+            powerupsCollected: gameStats.powerupsCollected,
+            playtime: gameStats.playtime,
+            difficulty: gameStats.difficulty,
+            timestamp: new Date().toISOString()
+        };
+        this.saveStats();
+    }
+
+    getStats() {
+        return this.stats;
+    }
+
+    getAverageScore() {
+        if (this.stats.gamesPlayed === 0) return 0;
+        return Math.round(this.stats.totalScore / this.stats.gamesPlayed);
+    }
+
+    getAccuracy() {
+        if (this.stats.totalBulletsFired === 0) return 0;
+        return Math.round((this.stats.totalEnemiesKilled / this.stats.totalBulletsFired) * 100);
+    }
+
+    getAveragePlaytime() {
+        if (this.stats.gamesPlayed === 0) return 0;
+        return Math.round(this.stats.totalPlaytime / this.stats.gamesPlayed);
+    }
+
+    resetStats() {
+        this.stats = {
+            gamesPlayed: 0,
+            bestWave: 0,
+            totalScore: 0,
+            totalPowerupsCollected: 0,
+            totalPlaytime: 0,
+            totalBulletsFired: 0,
+            totalEnemiesKilled: 0,
+            lastGameStats: null
+        };
+        this.saveStats();
+    }
+}
+
+const statisticsManager = new StatisticsManager();
+
+
 // Main Game Class
 class SpaceInvadersGame {
      constructor(difficulty = DIFFICULTIES.NORMAL) {
@@ -481,8 +566,12 @@ class SpaceInvadersGame {
         // Bullet progression system - start with 1 bullet
         this.bulletLevel = 1; // 1 = single center, 2 = dual spread, 3+ = wide spread
         
-        // Powerup statistics
+         // Powerup statistics
         this.powerupCollected = 0; // Total powerups collected this game
+        
+        // Game statistics tracking
+        this.bulletsFired = 0; // Total bullets fired this game
+        this.enemiesKilled = 0; // Total enemies killed this game
         
         // Game objects
         this.player = new Player(GAME_WIDTH / 2 - PLAYER_WIDTH / 2, GAME_HEIGHT - 50);
@@ -516,7 +605,7 @@ class SpaceInvadersGame {
             
             if (e.key === ' ') {
                 e.preventDefault();
-                this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
+                this.bulletsFired += this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
             }
         });
         
@@ -529,9 +618,9 @@ class SpaceInvadersGame {
         
         // Rapid fire interval handler
         this.lastShotTime = 0;
-        this.shootInterval = setInterval(() => {
+         this.shootInterval = setInterval(() => {
             if (this.state === GAME_STATE.PLAYING && this.powerUpManager.hasPowerUp('RAPID_FIRE')) {
-                this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
+                this.bulletsFired += this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
             }
         }, 100); // Rapid fire: every 100ms
     }
@@ -573,7 +662,7 @@ class SpaceInvadersGame {
         // Shoot button - Fire
         shootBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
+            this.bulletsFired += this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
         });
         
         // Also support mouse events for desktop testing on touchscreen devices
@@ -591,8 +680,8 @@ class SpaceInvadersGame {
             this.keys['ArrowRight'] = false;
         });
         
-        shootBtn.addEventListener('mousedown', () => {
-            this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
+         shootBtn.addEventListener('mousedown', () => {
+            this.bulletsFired += this.player.shoot(this.bullets, this.wave, this.powerUpManager, this.bulletLevel);
         });
     }
 
@@ -723,6 +812,7 @@ class SpaceInvadersGame {
                 if (this.checkCollision(bullet, enemy)) {
                     this.enemies.splice(j, 1);
                     this.bullets.splice(i, 1);
+                    this.enemiesKilled++; // Increment enemies killed counter
                     const baseScore = enemy.points;
                     const finalScore = Math.ceil(baseScore * this.difficulty.scoreMultiplier);
                     this.score += finalScore;
@@ -891,6 +981,17 @@ class SpaceInvadersGame {
         document.getElementById('finalScore').textContent = `Final Score: ${this.score}`;
         document.getElementById('wavesDefeated').textContent = `Waves Defeated: ${this.wave - 1}`;
         
+        // Record game statistics
+        statisticsManager.recordGameEnd({
+            score: this.score,
+            wave: this.wave,
+            powerupsCollected: this.powerupCollected,
+            playtime: Math.round(this.gameTime / 1000), // Convert ms to seconds
+            bulletsFired: this.bulletsFired,
+            enemiesKilled: this.enemiesKilled,
+            difficulty: this.difficulty.name
+        });
+        
         // Check if this is a high score
         if (highScoreManager.isHighScore(this.score)) {
             showHighScoreModal(this.score);
@@ -1003,6 +1104,7 @@ class Player {
     shoot(bullets, wave = 1, powerUpManager = null, bulletLevel = 1) {
         const centerGunX = this.x + this.width / 2 - BULLET_WIDTH / 2;
         const spreadVelocity = 2;
+        let bulletsCreated = 0;
         
         // Bullet level determines shot pattern
         if (powerUpManager && powerUpManager.hasPowerUp('MULTI_SHOT')) {
@@ -1012,6 +1114,7 @@ class Player {
             bullets.push(new Bullet(leftGunX, this.y - BULLET_HEIGHT, -spreadVelocity));
             bullets.push(new Bullet(centerGunX, this.y - BULLET_HEIGHT, 0));
             bullets.push(new Bullet(rightGunX, this.y - BULLET_HEIGHT, spreadVelocity));
+            bulletsCreated = 3;
         } else if (bulletLevel >= 3) {
             // Level 3+: Wide spread dual shot
             const waveSpread = Math.max(0.1, 0.25 - (wave - 2) * 0.05);
@@ -1019,18 +1122,23 @@ class Player {
             const rightGunX = this.x + (1 - waveSpread) * this.width - BULLET_WIDTH / 2;
             bullets.push(new Bullet(leftGunX, this.y - BULLET_HEIGHT, -spreadVelocity));
             bullets.push(new Bullet(rightGunX, this.y - BULLET_HEIGHT, spreadVelocity));
+            bulletsCreated = 2;
         } else if (bulletLevel === 2) {
             // Level 2: Dual shot centered
             const offset = 8;
             bullets.push(new Bullet(centerGunX - offset, this.y - BULLET_HEIGHT, -spreadVelocity * 0.5));
             bullets.push(new Bullet(centerGunX + offset, this.y - BULLET_HEIGHT, spreadVelocity * 0.5));
+            bulletsCreated = 2;
         } else {
             // Level 1: Single center shot
             bullets.push(new Bullet(centerGunX, this.y - BULLET_HEIGHT, 0));
+            bulletsCreated = 1;
         }
         
         // Play shoot sound
         soundManager.playSound('shoot');
+        
+        return bulletsCreated;
     }
 
     draw(ctx, wave = 1) {
