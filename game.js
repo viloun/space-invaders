@@ -11,6 +11,42 @@ const BULLET_HEIGHT = 15;
 const BULLET_SPEED = 7;
 const ENEMY_BULLET_SPEED = 4;
 
+// Difficulty Levels Configuration
+const DIFFICULTIES = {
+    EASY: {
+        name: 'Easy',
+        enemySpeedMultiplier: 0.6,
+        enemySpawnRate: 45, // frames between enemy shots
+        enemyBulletSpeedMultiplier: 0.7,
+        scoreMultiplier: 0.5,
+        bonusLifeInterval: 3000, // points needed for bonus life
+    },
+    NORMAL: {
+        name: 'Normal',
+        enemySpeedMultiplier: 1.0,
+        enemySpawnRate: 30,
+        enemyBulletSpeedMultiplier: 1.0,
+        scoreMultiplier: 1.0,
+        bonusLifeInterval: 2000,
+    },
+    HARD: {
+        name: 'Hard',
+        enemySpeedMultiplier: 1.5,
+        enemySpawnRate: 20,
+        enemyBulletSpeedMultiplier: 1.3,
+        scoreMultiplier: 1.5,
+        bonusLifeInterval: 1500,
+    },
+    INSANE: {
+        name: 'Insane',
+        enemySpeedMultiplier: 2.0,
+        enemySpawnRate: 15,
+        enemyBulletSpeedMultiplier: 1.8,
+        scoreMultiplier: 2.0,
+        bonusLifeInterval: 1000,
+    },
+};
+
 // Game States
 const GAME_STATE = {
     PLAYING: 'playing',
@@ -227,7 +263,7 @@ const highScoreManager = new HighScoreManager();
 
 // Main Game Class
 class SpaceInvadersGame {
-    constructor() {
+    constructor(difficulty = DIFFICULTIES.NORMAL) {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         
@@ -237,7 +273,8 @@ class SpaceInvadersGame {
         this.lives = 3;
         this.wave = 1;
         this.gameTime = 0;
-        this.lastLifeRewardScore = 0; // Track last life reward milestone
+        this.lastLifeRewardScore = 0;
+        this.difficulty = difficulty;
         
         // Game objects
         this.player = new Player(GAME_WIDTH / 2 - PLAYER_WIDTH / 2, GAME_HEIGHT - 50);
@@ -351,7 +388,7 @@ class SpaceInvadersGame {
             for (let col = 0; col < cols; col++) {
                 const x = startX + col * spacing;
                 const y = startY + row * spacing;
-                this.enemies.push(new Enemy(x, y, this.wave));
+                this.enemies.push(new Enemy(x, y, this.wave, this.difficulty));
             }
         }
     }
@@ -429,15 +466,17 @@ class SpaceInvadersGame {
                 if (this.checkCollision(bullet, enemy)) {
                     this.enemies.splice(j, 1);
                     this.bullets.splice(i, 1);
-                    this.score += enemy.points;
+                    const baseScore = enemy.points;
+                    const finalScore = Math.ceil(baseScore * this.difficulty.scoreMultiplier);
+                    this.score += finalScore;
                     
                     // Play enemy death sound
                     soundManager.playSound('enemyDeath');
                     
-                    // Check for life reward every 2000 points
-                    if (this.score >= this.lastLifeRewardScore + 2000) {
+                    // Check for life reward based on difficulty interval
+                    if (this.score >= this.lastLifeRewardScore + this.difficulty.bonusLifeInterval) {
                         this.lives++;
-                        this.lastLifeRewardScore += 2000;
+                        this.lastLifeRewardScore += this.difficulty.bonusLifeInterval;
                         soundManager.playSound('bonusLife');
                         this.createLifeRewardEffect();
                     }
@@ -469,13 +508,14 @@ class SpaceInvadersGame {
     }
 
     enemyActions() {
-        // Enemy shooting
-        if (this.gameTime % 30 === 0 && this.enemies.length > 0) {
+        // Enemy shooting - adjust spawn rate by difficulty
+        if (this.gameTime % this.difficulty.enemySpawnRate === 0 && this.enemies.length > 0) {
             const randomEnemy = this.enemies[Math.floor(Math.random() * this.enemies.length)];
+            const bulletSpeed = ENEMY_BULLET_SPEED * this.difficulty.enemyBulletSpeedMultiplier;
             this.enemyBullets.push(new EnemyBullet(
                 randomEnemy.x + ENEMY_WIDTH / 2,
                 randomEnemy.y + ENEMY_HEIGHT,
-                ENEMY_BULLET_SPEED
+                bulletSpeed
             ));
         }
     }
@@ -585,6 +625,7 @@ class SpaceInvadersGame {
         document.getElementById('score').textContent = this.score;
         document.getElementById('wave').textContent = this.wave;
         document.getElementById('lives').textContent = this.lives;
+        document.getElementById('difficulty').textContent = this.difficulty.name;
     }
 }
 
@@ -689,12 +730,13 @@ class Bullet {
 
 // Enemy Class
 class Enemy {
-    constructor(x, y, wave) {
+    constructor(x, y, wave, difficulty = DIFFICULTIES.NORMAL) {
         this.x = x;
         this.y = y;
         this.width = ENEMY_WIDTH;
         this.height = ENEMY_HEIGHT;
-        this.speed = 1 + (wave * 0.5);
+        this.baseSpeed = 1 + (wave * 0.5);
+        this.speed = this.baseSpeed * difficulty.enemySpeedMultiplier;
         this.points = 10 + (wave * 5);
         this.direction = 1;
     }
@@ -944,6 +986,9 @@ function toggleLeaderboard() {
 
 // Initialize leaderboard on page load
 window.addEventListener('load', () => {
+    // Expose difficulties to window for HTML onclick handlers
+    window.DIFFICULTIES = DIFFICULTIES;
+    
     updateLeaderboardDisplay();
     const scores = highScoreManager.getScores();
     if (scores.length > 0) {
@@ -952,10 +997,15 @@ window.addEventListener('load', () => {
         document.getElementById('showLeaderboardBtn').style.display = 'block';
     }
     
-    // Initialize game
-
-    new SpaceInvadersGame();
+    // Show difficulty selection modal instead of starting game immediately
+    document.getElementById('difficultyModal').style.display = 'flex';
 });
+
+// Start game with selected difficulty
+function startGame(difficulty) {
+    document.getElementById('difficultyModal').style.display = 'none';
+    new SpaceInvadersGame(difficulty);
+}
 
 // Sound Manager Toggle Function
 function toggleSoundManager() {

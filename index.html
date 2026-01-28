@@ -442,12 +442,105 @@
         .sound-toggle-btn.off {
             opacity: 0.5;
         }
+
+        /* Difficulty Selection Modal */
+        .difficulty-modal {
+            display: flex;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 14, 39, 0.98);
+            border: 3px solid #00ff41;
+            padding: 40px;
+            text-align: center;
+            border-radius: 10px;
+            z-index: 300;
+            box-shadow: 0 0 30px #00ff41;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .difficulty-modal h2 {
+            font-size: 2.5em;
+            color: #00ff41;
+            text-shadow: 0 0 10px #00ff41;
+            margin-bottom: 10px;
+        }
+
+        .difficulty-modal p {
+            font-size: 1.1em;
+            color: #00aa22;
+            margin-bottom: 10px;
+        }
+
+        .difficulty-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .difficulty-btn {
+            padding: 20px;
+            font-size: 1.2em;
+            background: rgba(0, 255, 65, 0.1);
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-btn:hover {
+            background: rgba(0, 255, 65, 0.3);
+            box-shadow: 0 0 15px #00ff41;
+            transform: scale(1.05);
+        }
+
+        .difficulty-btn:active {
+            transform: scale(0.95);
+        }
+
+        .difficulty-description {
+            font-size: 0.85em;
+            color: #00aa22;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="game-container">
         <h1>SPACE INVADERS</h1>
         
+        <!-- Difficulty Selection Modal -->
+        <div class="difficulty-modal" id="difficultyModal">
+            <h2>SELECT DIFFICULTY</h2>
+            <p>Choose your challenge level:</p>
+            <div class="difficulty-options">
+                <button class="difficulty-btn" onclick="startGame(window.DIFFICULTIES.EASY)">
+                    EASY
+                    <div class="difficulty-description">½ Speed, +50% Lives</div>
+                </button>
+                <button class="difficulty-btn" onclick="startGame(window.DIFFICULTIES.NORMAL)">
+                    NORMAL
+                    <div class="difficulty-description">Standard difficulty</div>
+                </button>
+                <button class="difficulty-btn" onclick="startGame(window.DIFFICULTIES.HARD)">
+                    HARD
+                    <div class="difficulty-description">1.5× Speed, +50% Score</div>
+                </button>
+                <button class="difficulty-btn" onclick="startGame(window.DIFFICULTIES.INSANE)">
+                    INSANE
+                    <div class="difficulty-description">2× Speed, 2× Score</div>
+                </button>
+            </div>
+        </div>
+
         <div style="position: relative; width: 800px; height: 600px;">
             <canvas id="gameCanvas" width="800" height="600"></canvas>
             <button class="sound-toggle-btn" id="soundToggleBtn" onclick="toggleSoundManager()">🔊 SOUND ON</button>
@@ -489,6 +582,10 @@
             <div class="stat">
                 <span class="stat-label">LIVES:</span>
                 <span class="stat-value" id="lives">3</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">DIFFICULTY:</span>
+                <span class="stat-value" id="difficulty">Normal</span>
             </div>
         </div>
 
