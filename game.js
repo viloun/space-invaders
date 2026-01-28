@@ -481,6 +481,9 @@ class SpaceInvadersGame {
         // Bullet progression system - start with 1 bullet
         this.bulletLevel = 1; // 1 = single center, 2 = dual spread, 3+ = wide spread
         
+        // Powerup statistics
+        this.powerupCollected = 0; // Total powerups collected this game
+        
         // Game objects
         this.player = new Player(GAME_WIDTH / 2 - PLAYER_WIDTH / 2, GAME_HEIGHT - 50);
         this.enemies = [];
@@ -680,6 +683,7 @@ class SpaceInvadersGame {
             // Check collision with player
             if (this.checkCollision(powerUp, this.player)) {
                 this.powerUpManager.addPowerUp(powerUp.type);
+                this.powerupCollected++; // Increment total powerups collected
                 this.powerUps.splice(i, 1);
                 soundManager.playSound('powerUp');
                 this.createPowerUpCollectEffect(powerUp.x, powerUp.y);
@@ -967,7 +971,7 @@ class SpaceInvadersGame {
             bulletDisplay.textContent = `SHOT: ${levelLabels[this.bulletLevel] || 'Single'}`;
         }
         
-        // Update powerup display
+        // Update powerup display (active powerups with timers)
         const powerupDisplay = document.getElementById('powerUps');
         if (powerupDisplay) {
             const activePowerUps = [];
@@ -976,6 +980,12 @@ class SpaceInvadersGame {
                 activePowerUps.push(`${POWERUP_TYPES[type].icon} ${remaining}s`);
             }
             powerupDisplay.textContent = activePowerUps.length > 0 ? activePowerUps.join('  ') : '';
+        }
+        
+        // Update powerup count display (total collected)
+        const powerupCountDisplay = document.getElementById('powerupCount');
+        if (powerupCountDisplay) {
+            powerupCountDisplay.textContent = this.powerupCollected > 0 ? `POWERUPS COLLECTED: ${this.powerupCollected}` : '';
         }
     }
 }
