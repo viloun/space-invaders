@@ -59,6 +59,8 @@ class SoundManager {
     constructor() {
         this.audioContext = null;
         this.soundEnabled = true;
+        this.soundQueue = [];
+        this.isProcessingQueue = false;
         this.initAudioContext();
     }
 
@@ -76,132 +78,175 @@ class SoundManager {
 
     playSound(type) {
         if (!this.soundEnabled || !this.audioContext) return;
-
-        switch (type) {
-            case 'shoot':
-                this.playShootSound();
-                break;
-            case 'enemyDeath':
-                this.playEnemyDeathSound();
-                break;
-            case 'waveComplete':
-                this.playWaveCompleteSound();
-                break;
-            case 'gameOver':
-                this.playGameOverSound();
-                break;
-            case 'bonusLife':
-                this.playBonusLifeSound();
-                break;
+        
+        // Queue sound to play asynchronously to avoid blocking game loop
+        this.soundQueue.push(type);
+        
+        if (!this.isProcessingQueue) {
+            this.processQueue();
         }
     }
 
+    processQueue() {
+        if (this.soundQueue.length === 0) {
+            this.isProcessingQueue = false;
+            return;
+        }
+
+        this.isProcessingQueue = true;
+        const type = this.soundQueue.shift();
+        
+        // Use requestAnimationFrame or setTimeout to avoid blocking
+        requestAnimationFrame(() => {
+            switch (type) {
+                case 'shoot':
+                    this.playShootSound();
+                    break;
+                case 'enemyDeath':
+                    this.playEnemyDeathSound();
+                    break;
+                case 'waveComplete':
+                    this.playWaveCompleteSound();
+                    break;
+                case 'gameOver':
+                    this.playGameOverSound();
+                    break;
+                case 'bonusLife':
+                    this.playBonusLifeSound();
+                    break;
+            }
+            
+            // Process next sound in queue
+            this.processQueue();
+        });
+    }
+
     playShootSound() {
-        const now = this.audioContext.currentTime;
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
+        try {
+            const now = this.audioContext.currentTime;
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
 
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
 
-        osc.frequency.setValueAtTime(400, now);
-        osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
-        osc.type = 'square';
+            osc.frequency.setValueAtTime(400, now);
+            osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+            osc.type = 'square';
 
-        gain.gain.setValueAtTime(0.1, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
 
-        osc.start(now);
-        osc.stop(now + 0.05);
+            osc.start(now);
+            osc.stop(now + 0.05);
+        } catch (e) {
+            // Silently handle any audio context errors
+        }
     }
 
     playEnemyDeathSound() {
-        const now = this.audioContext.currentTime;
-        const osc = this.audioContext.createOscillator();
-        const gain = this.audioContext.createGain();
+        try {
+            const now = this.audioContext.currentTime;
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
 
-        osc.connect(gain);
-        gain.connect(this.audioContext.destination);
+            osc.connect(gain);
+            gain.connect(this.audioContext.destination);
 
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-        osc.type = 'triangle';
+            osc.frequency.setValueAtTime(300, now);
+            osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+            osc.type = 'triangle';
 
-        gain.gain.setValueAtTime(0.15, now);
-        gain.gain.exponentialRampToValueAtTime(0, now + 0.1);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0, now + 0.1);
 
-        osc.start(now);
-        osc.stop(now + 0.1);
+            osc.start(now);
+            osc.stop(now + 0.1);
+        } catch (e) {
+            // Silently handle any audio context errors
+        }
     }
 
     playWaveCompleteSound() {
-        const now = this.audioContext.currentTime;
-        const frequencies = [523, 659, 784, 523]; // C5, E5, G5, C5 - triumphant chord
-        
-        frequencies.forEach((freq, i) => {
-            const osc = this.audioContext.createOscillator();
-            const gain = this.audioContext.createGain();
+        try {
+            const now = this.audioContext.currentTime;
+            const frequencies = [523, 659, 784, 523]; // C5, E5, G5, C5
+            
+            frequencies.forEach((freq, i) => {
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
 
-            osc.connect(gain);
-            gain.connect(this.audioContext.destination);
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
 
-            osc.frequency.setValueAtTime(freq, now);
-            osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+                osc.type = 'sine';
 
-            const startTime = now + (i * 0.05);
-            gain.gain.setValueAtTime(0.08, startTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+                const startTime = now + (i * 0.05);
+                gain.gain.setValueAtTime(0.08, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
 
-            osc.start(startTime);
-            osc.stop(startTime + 0.3);
-        });
+                osc.start(startTime);
+                osc.stop(startTime + 0.3);
+            });
+        } catch (e) {
+            // Silently handle any audio context errors
+        }
     }
 
     playGameOverSound() {
-        const now = this.audioContext.currentTime;
-        const frequencies = [392, 349, 330, 294]; // G4, F4, E4, D4 - descending sad chord
-        
-        frequencies.forEach((freq, i) => {
-            const osc = this.audioContext.createOscillator();
-            const gain = this.audioContext.createGain();
+        try {
+            const now = this.audioContext.currentTime;
+            const frequencies = [392, 349, 330, 294]; // G4, F4, E4, D4
+            
+            frequencies.forEach((freq, i) => {
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
 
-            osc.connect(gain);
-            gain.connect(this.audioContext.destination);
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
 
-            osc.frequency.setValueAtTime(freq, now);
-            osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+                osc.type = 'sine';
 
-            const startTime = now + (i * 0.1);
-            gain.gain.setValueAtTime(0.1, startTime);
-            gain.gain.exponentialRampToValueAtTime(0, startTime + 0.4);
+                const startTime = now + (i * 0.1);
+                gain.gain.setValueAtTime(0.1, startTime);
+                gain.gain.exponentialRampToValueAtTime(0, startTime + 0.4);
 
-            osc.start(startTime);
-            osc.stop(startTime + 0.4);
-        });
+                osc.start(startTime);
+                osc.stop(startTime + 0.4);
+            });
+        } catch (e) {
+            // Silently handle any audio context errors
+        }
     }
 
     playBonusLifeSound() {
-        const now = this.audioContext.currentTime;
-        // Ascending arpeggio: C5, D5, E5, G5, C6
-        const frequencies = [523, 587, 659, 784, 1047];
-        
-        frequencies.forEach((freq, i) => {
-            const osc = this.audioContext.createOscillator();
-            const gain = this.audioContext.createGain();
+        try {
+            const now = this.audioContext.currentTime;
+            // Ascending arpeggio: C5, D5, E5, G5, C6
+            const frequencies = [523, 587, 659, 784, 1047];
+            
+            frequencies.forEach((freq, i) => {
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
 
-            osc.connect(gain);
-            gain.connect(this.audioContext.destination);
+                osc.connect(gain);
+                gain.connect(this.audioContext.destination);
 
-            osc.frequency.setValueAtTime(freq, now);
-            osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, now);
+                osc.type = 'sine';
 
-            const startTime = now + (i * 0.05);
-            gain.gain.setValueAtTime(0.1, startTime);
-            gain.gain.exponentialRampToValueAtTime(0, startTime + 0.25);
+                const startTime = now + (i * 0.05);
+                gain.gain.setValueAtTime(0.1, startTime);
+                gain.gain.exponentialRampToValueAtTime(0, startTime + 0.25);
 
-            osc.start(startTime);
-            osc.stop(startTime + 0.25);
-        });
+                osc.start(startTime);
+                osc.stop(startTime + 0.25);
+            });
+        } catch (e) {
+            // Silently handle any audio context errors
+        }
     }
 
     toggleSound() {
