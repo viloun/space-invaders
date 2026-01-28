@@ -1566,12 +1566,12 @@ window.addEventListener('load', () => {
     }
     
     // Show difficulty selection modal instead of starting game immediately
-    document.getElementById('difficultyModal').style.display = 'flex';
+    document.getElementById('difficultyModal').classList.add('show');
 });
 
 // Start game with selected difficulty
 function startGame(difficulty) {
-    document.getElementById('difficultyModal').style.display = 'none';
+    document.getElementById('difficultyModal').classList.remove('show');
     window.currentGame = new SpaceInvadersGame(difficulty);
 }
 
