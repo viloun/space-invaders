@@ -1520,15 +1520,12 @@ function showLeaderboard() {
 
 function toggleLeaderboard() {
     const leaderboard = document.getElementById('leaderboard');
-    const showBtn = document.getElementById('showLeaderboardBtn');
     
-    if (leaderboard.style.display === 'none') {
-        updateLeaderboardDisplay();
-        leaderboard.style.display = 'block';
-        showBtn.style.display = 'none';
+    if (leaderboard.classList.contains('show')) {
+        leaderboard.classList.remove('show');
     } else {
-        leaderboard.style.display = 'none';
-        showBtn.style.display = 'block';
+        updateLeaderboardDisplay();
+        leaderboard.classList.add('show');
     }
 }
 

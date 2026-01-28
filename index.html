@@ -124,6 +124,17 @@
             }
         }
 
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
         .game-over h2 {
             font-size: 2.5em;
             margin-bottom: 20px;
@@ -465,30 +476,65 @@
         /* Leaderboard */
 
         .leaderboard {
-            background: rgba(10, 14, 39, 0.95);
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: rgba(10, 14, 39, 0.98);
             border: 2px solid #00ff41;
             padding: 15px;
             border-radius: 8px;
             z-index: 100;
-            max-width: 400px;
+            max-width: 350px;
             box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
-            margin-top: 20px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .leaderboard.show {
+            display: block;
+        }
+
+        .leaderboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
 
         .leaderboard-title {
             color: #00ff41;
             font-weight: bold;
             font-size: 1.1em;
-            margin-bottom: 10px;
             text-shadow: 0 0 5px #00ff41;
-            border-bottom: 1px solid #00ff41;
-            padding-bottom: 5px;
+            margin: 0;
+        }
+
+        .leaderboard-close {
+            background: none;
+            border: none;
+            color: #00ff41;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .leaderboard-close:hover {
+            color: #00aa22;
+            text-shadow: 0 0 10px #00ff41;
         }
 
         .leaderboard-list {
             list-style: none;
             padding: 0;
             margin: 0;
+            border-top: 1px solid #00ff41;
+            padding-top: 10px;
         }
 
         .leaderboard-entry {
@@ -743,8 +789,11 @@
         </div>
 
         <!-- Leaderboard -->
-        <div class="leaderboard" id="leaderboard" style="display: none;">
-            <div class="leaderboard-title">TOP SCORES</div>
+        <div class="leaderboard" id="leaderboard">
+            <div class="leaderboard-header">
+                <div class="leaderboard-title">TOP SCORES</div>
+                <button class="leaderboard-close" onclick="toggleLeaderboard()">✕</button>
+            </div>
             <ul class="leaderboard-list" id="leaderboardList">
                 <!-- Populated by JavaScript -->
             </ul>
