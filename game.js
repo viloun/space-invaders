@@ -570,6 +570,7 @@ class SpaceInvadersGame {
         
          // Powerup statistics
         this.powerupCollected = 0; // Total powerups collected this game
+        this.powerupsDroppedThisWave = 0; // Powerups dropped in current wave (max 4)
         
         // Game statistics tracking
         this.bulletsFired = 0; // Total bullets fired this game
@@ -745,7 +746,8 @@ class SpaceInvadersGame {
         
         // Check for game over
         if (this.enemies.length === 0) {
-            this.wave++;
+             this.wave++;
+            this.powerupsDroppedThisWave = 0; // Reset powerup counter for new wave
             
             // Progression: Unlock bullet levels at specific waves
             if (this.wave === 2 && this.bulletLevel < 2) {
@@ -758,6 +760,7 @@ class SpaceInvadersGame {
             
             soundManager.playSound('waveComplete');
             this.spawnWave();
+
         }
         
         if (this.lives <= 0) {
@@ -836,12 +839,14 @@ class SpaceInvadersGame {
                         this.createLifeRewardEffect();
                     }
                     
-                    // Randomly drop powerups (20% chance)
-                    if (Math.random() < 0.2) {
+                     // Randomly drop powerups (20% chance, max 4 per wave)
+                    if (Math.random() < 0.2 && this.powerupsDroppedThisWave < 4) {
                         const powerUpTypes = Object.keys(POWERUP_TYPES);
                         const randomType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
                         this.powerUps.push(new PowerUp(enemy.x + ENEMY_WIDTH / 2, enemy.y, randomType));
+                        this.powerupsDroppedThisWave++;
                     }
+
                     
                     this.createExplosion(enemy.x + ENEMY_WIDTH / 2, enemy.y + ENEMY_HEIGHT / 2);
                     break;
