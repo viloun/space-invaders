@@ -193,6 +193,57 @@ npx capacitor run android
 - Check browser console for JavaScript errors (F12)
 - Verify touch events are not prevented by other handlers
 
+## Deployment & CI/CD
+
+### Web Deployment (GitHub Pages)
+
+The game is automatically deployed to GitHub Pages on every push to the `main` branch.
+
+**Play Online**: https://viloun.github.io/space-invaders
+
+The deployment is handled automatically by the `deploy-pages.yml` workflow.
+
+### Automatic Android APK Builds
+
+GitHub Actions automatically builds an APK on every push to `main` or `develop` branches, and on pull requests.
+
+**Build Status**: Check the [Actions tab](https://github.com/viloun/space-invaders/actions) for build logs
+
+**Accessing Built APKs**:
+1. Go to [GitHub Actions](https://github.com/viloun/space-invaders/actions)
+2. Click on any "Build Android APK" workflow run
+3. Scroll down to "Artifacts"
+4. Download `space-invaders-release-apk`
+
+### Creating Releases with APKs
+
+To create a release with a built APK:
+
+1. **Create a Git tag**:
+   ```bash
+   git tag v1.0.0
+   git push origin v1.0.0
+   ```
+
+2. The `release.yml` workflow will automatically:
+   - Build the Android APK
+   - Create a GitHub Release
+   - Upload the APK to the release
+
+3. **Download from Release**:
+   - Go to [Releases](https://github.com/viloun/space-invaders/releases)
+   - Download the APK from the release assets
+
+### GitHub Actions Workflows
+
+This project includes three automated workflows:
+
+1. **android-build.yml** - Builds Android APK on push to main/develop and PRs
+2. **deploy-pages.yml** - Deploys web version to GitHub Pages on push to main
+3. **release.yml** - Builds and releases APK when a tag is pushed
+
+All workflows run automatically - no manual intervention needed!
+
 ## Tips for Playing
 
 - Stay mobile and unpredictable to avoid enemy fire
