@@ -735,6 +735,77 @@
             </div>
          </div>
 
+        <!-- Control Buttons Below Canvas -->
+        <div class="game-controls">
+            <button class="sound-toggle-btn" id="soundToggleBtn" onclick="toggleSoundManager()">🔊 SOUND ON</button>
+            <button class="show-leaderboard-btn" id="showLeaderboardBtn" onclick="toggleLeaderboard()">Show Scores</button>
+            <button class="show-statistics-btn" id="showStatisticsBtn" onclick="openStatisticsModal()">Show Stats</button>
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="leaderboard" id="leaderboard" style="display: none;">
+            <div class="leaderboard-title">TOP SCORES</div>
+            <ul class="leaderboard-list" id="leaderboardList">
+                <!-- Populated by JavaScript -->
+            </ul>
+        </div>
+
+        <!-- Name Entry Modal -->
+        <div class="name-entry-modal" id="nameEntryModal">
+            <h2>NEW HIGH SCORE!</h2>
+            <p id="newScoreDisplay">Score: 0</p>
+            <p>Enter your name:</p>
+            <input type="text" id="playerName" placeholder="Your name" maxlength="20">
+            <button onclick="submitHighScore()">Save Score</button>
+            <button onclick="skipHighScore()">Skip</button>
+        </div>
+
+        <!-- Statistics Modal -->
+        <div class="statistics-modal" id="statisticsModal">
+            <div class="modal-content">
+                <h2>LIFETIME STATISTICS</h2>
+                <button class="close-btn" onclick="closeStatisticsModal()">✕</button>
+                <div class="statistics-grid">
+                    <div class="stat-item">
+                        <span class="stat-label">Games Played</span>
+                        <span class="stat-value" id="statGamesPlayed">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Best Wave</span>
+                        <span class="stat-value" id="statBestWave">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Score</span>
+                        <span class="stat-value" id="statTotalScore">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Average Score</span>
+                        <span class="stat-value" id="statAverageScore">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Powerups</span>
+                        <span class="stat-value" id="statTotalPowerups">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Accuracy</span>
+                        <span class="stat-value" id="statAccuracy">0%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Total Playtime</span>
+                        <span class="stat-value" id="statTotalPlaytime">0m</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Avg Playtime</span>
+                        <span class="stat-value" id="statAvgPlaytime">0m</span>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button onclick="resetAllStatistics()">Reset Stats</button>
+                    <button onclick="closeStatisticsModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Game Stats Display -->
         <div class="stats">
             <div class="stat">
