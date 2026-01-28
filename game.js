@@ -376,9 +376,15 @@ class PowerUpManager {
         this.player = player;
         this.activePowerUps = {};
         this.powerUpStartTimes = {};
+        this.shieldPickupCount = 0; // Track number of shield pickups
     }
 
     addPowerUp(type) {
+        // Track shield pickups to increase duration
+        if (type === 'SHIELD') {
+            this.shieldPickupCount++;
+        }
+        
         this.activePowerUps[type] = true;
         this.powerUpStartTimes[type] = Date.now();
     }
@@ -387,7 +393,13 @@ class PowerUpManager {
         const now = Date.now();
         
         for (let type in this.activePowerUps) {
-            const duration = POWERUP_TYPES[type].duration;
+            let duration = POWERUP_TYPES[type].duration;
+            
+            // Increase shield duration by 2 seconds for each shield pickup
+            if (type === 'SHIELD') {
+                duration = POWERUP_TYPES[type].duration + (this.shieldPickupCount - 1) * 2000;
+            }
+            
             const elapsed = now - this.powerUpStartTimes[type];
             
             if (elapsed > duration) {
@@ -404,7 +416,13 @@ class PowerUpManager {
     getRemainingTime(type) {
         if (!this.hasPowerUp(type)) return 0;
         const now = Date.now();
-        const duration = POWERUP_TYPES[type].duration;
+        let duration = POWERUP_TYPES[type].duration;
+        
+        // Increase shield duration by 2 seconds for each shield pickup
+        if (type === 'SHIELD') {
+            duration = POWERUP_TYPES[type].duration + (this.shieldPickupCount - 1) * 2000;
+        }
+        
         const elapsed = now - this.powerUpStartTimes[type];
         return Math.max(0, duration - elapsed);
     }
@@ -839,8 +857,8 @@ class SpaceInvadersGame {
                         this.createLifeRewardEffect();
                     }
                     
-                     // Randomly drop powerups (20% chance, max 4 per wave)
-                    if (Math.random() < 0.2 && this.powerupsDroppedThisWave < 4) {
+                     // Randomly drop powerups (20% chance, max 4 per wave, max 4 on screen)
+                    if (Math.random() < 0.2 && this.powerupsDroppedThisWave < 4 && this.powerUps.length < 4) {
                         const powerUpTypes = Object.keys(POWERUP_TYPES);
                         const randomType = powerUpTypes[Math.floor(Math.random() * powerUpTypes.length)];
                         this.powerUps.push(new PowerUp(enemy.x + ENEMY_WIDTH / 2, enemy.y, randomType));
