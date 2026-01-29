@@ -1550,11 +1550,17 @@ function toggleLeaderboard() {
     } else {
         updateLeaderboardDisplay();
         leaderboard.classList.add('show');
-        // Pause game when opening leaderboard during gameplay
-        if (window.currentGame && window.currentGame.state === GAME_STATE.PLAYING && !window.currentGame.isPaused) {
-            window.currentGame.togglePause();
-        }
     }
+}
+
+// Function to show leaderboard with pause
+function showLeaderboardWithPause() {
+    // Pause game immediately if it's playing
+    if (window.currentGame && window.currentGame.state === GAME_STATE.PLAYING && !window.currentGame.isPaused) {
+        window.currentGame.togglePause();
+    }
+    // Then show the leaderboard
+    toggleLeaderboard();
 }
 
 // Initialize leaderboard on page load
