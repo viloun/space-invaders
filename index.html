@@ -607,6 +607,14 @@
             box-shadow: 0 0 10px #00ff41;
         }
 
+        /* Hide leaderboard on mobile */
+        @media (max-width: 1024px) {
+            .show-leaderboard-btn,
+            .leaderboard {
+                display: none !important;
+            }
+        }
+
         /* Sound Toggle Button */
         .sound-toggle-btn {
             padding: 10px 20px;
