@@ -732,6 +732,9 @@ class SpaceInvadersGame {
     update() {
         if (this.state !== GAME_STATE.PLAYING) return;
         
+        // Don't update if paused
+        if (this.isPaused) return;
+        
         this.gameTime++;
         
         // Update player
@@ -1543,9 +1546,9 @@ function toggleLeaderboard() {
     
     if (leaderboard.classList.contains('show')) {
         leaderboard.classList.remove('show');
-        // Resume game if it was paused for leaderboard
-        if (window.currentGame && window.currentGame.isPaused && window.currentGame.state === GAME_STATE.PLAYING) {
-            window.currentGame.togglePause();
+        // Resume game if it was paused
+        if (window.currentGame && window.currentGame.state === GAME_STATE.PLAYING && window.currentGame.isPaused) {
+            window.currentGame.isPaused = false;
         }
     } else {
         updateLeaderboardDisplay();
@@ -1556,11 +1559,13 @@ function toggleLeaderboard() {
 // Function to show leaderboard with pause
 function showLeaderboardWithPause() {
     // Pause game immediately if it's playing
-    if (window.currentGame && window.currentGame.state === GAME_STATE.PLAYING && !window.currentGame.isPaused) {
-        window.currentGame.togglePause();
+    if (window.currentGame && window.currentGame.state === GAME_STATE.PLAYING) {
+        window.currentGame.isPaused = true;
     }
     // Then show the leaderboard
-    toggleLeaderboard();
+    updateLeaderboardDisplay();
+    const leaderboard = document.getElementById('leaderboard');
+    leaderboard.classList.add('show');
 }
 
 // Initialize leaderboard on page load
