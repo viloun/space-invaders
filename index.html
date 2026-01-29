@@ -493,14 +493,17 @@
 
         .leaderboard {
             position: fixed;
-            top: 100px;
-            right: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: rgba(10, 14, 39, 0.98);
             border: 2px solid #00ff41;
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
             z-index: 200;
-            max-width: 350px;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
             box-shadow: 0 0 15px rgba(0, 255, 65, 0.3);
             display: none;
             animation: slideIn 0.3s ease-out;
@@ -592,8 +595,8 @@
             cursor: pointer;
             font-family: 'Courier New', monospace;
             border-radius: 5px;
-            z-index: 201;
-            display: none;
+            z-index: 99;
+            display: inline-block;
             font-size: 1em;
             font-weight: bold;
             transition: all 0.3s ease;
@@ -774,6 +777,34 @@
 
             .difficulty-description {
                 font-size: 0.6em;
+            }
+
+            .game-controls {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .sound-toggle-btn,
+            .show-leaderboard-btn,
+            .show-statistics-btn {
+                padding: 8px 12px;
+                font-size: 0.85em;
+                flex: 1;
+                min-width: 100px;
+            }
+
+            .leaderboard {
+                max-width: 95vw;
+                padding: 15px;
+                max-height: 85vh;
+            }
+
+            .leaderboard-title {
+                font-size: 1em;
+            }
+
+            .leaderboard-entry {
+                font-size: 0.85em;
             }
         }
 
