@@ -1006,6 +1006,9 @@ class SpaceInvadersGame {
         document.getElementById('finalScore').textContent = `Final Score: ${this.score}`;
         document.getElementById('wavesDefeated').textContent = `Waves Defeated: ${this.wave - 1}`;
         
+        // Show leaderboard button when game ends
+        document.getElementById('showLeaderboardBtn').style.display = 'inline-block';
+        
         // Record game statistics
         statisticsManager.recordGameEnd({
             score: this.score,
@@ -1566,6 +1569,9 @@ window.addEventListener('load', () => {
 // Start game with selected difficulty
 function startGame(difficulty) {
     document.getElementById('difficultyModal').classList.remove('show');
+    // Hide leaderboard button and modal while game is playing
+    document.getElementById('showLeaderboardBtn').style.display = 'none';
+    document.getElementById('leaderboard').classList.remove('show');
     window.currentGame = new SpaceInvadersGame(difficulty);
 }
 
