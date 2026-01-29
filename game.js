@@ -55,6 +55,9 @@ const GAME_STATE = {
     PAUSED: 'paused',
 };
 
+// Make GAME_STATE globally accessible
+window.GAME_STATE = GAME_STATE;
+
 // Sound Manager - Web Audio API synthesized retro arcade sounds
 class SoundManager {
     constructor() {
