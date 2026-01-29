@@ -609,9 +609,19 @@
 
         /* Hide leaderboard on mobile */
         @media (max-width: 1024px) {
-            .show-leaderboard-btn,
+            .show-leaderboard-btn {
+                display: none !important;
+            }
+
             .leaderboard {
                 display: none !important;
+            }
+        }
+
+        /* Ensure leaderboard shows on desktop when show class is added */
+        @media (min-width: 1025px) {
+            .leaderboard.show {
+                display: block !important;
             }
         }
 
