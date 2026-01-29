@@ -660,23 +660,24 @@
         .difficulty-modal {
             display: none;
             position: fixed;
-            top: 40%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(10, 14, 39, 0.98);
             border: 3px solid #00ff41;
-            padding: 40px;
+            padding: 30px 20px;
             text-align: center;
             border-radius: 10px;
             z-index: 300;
             box-shadow: 0 0 30px #00ff41;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
-            max-height: 80vh;
+            gap: 15px;
+            max-height: 90vh;
             overflow-y: auto;
-            width: auto;
-            min-width: 500px;
+            width: 90vw;
+            max-width: 600px;
+            min-width: auto;
         }
         
         .difficulty-modal.show {
@@ -684,14 +685,15 @@
         }
 
         .difficulty-modal h2 {
-            font-size: 2.5em;
+            font-size: 2em;
             color: #00ff41;
             text-shadow: 0 0 10px #00ff41;
             margin-bottom: 10px;
+            word-wrap: break-word;
         }
 
         .difficulty-modal p {
-            font-size: 1.1em;
+            font-size: 0.95em;
             color: #00aa22;
             margin-bottom: 10px;
         }
@@ -699,14 +701,14 @@
         .difficulty-options {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 12px;
             width: 100%;
-            max-width: 500px;
+            max-width: 100%;
         }
 
         .difficulty-btn {
-            padding: 20px;
-            font-size: 1.2em;
+            padding: 15px 10px;
+            font-size: 1em;
             background: rgba(0, 255, 65, 0.1);
             border: 2px solid #00ff41;
             color: #00ff41;
@@ -715,6 +717,12 @@
             font-weight: bold;
             border-radius: 8px;
             transition: all 0.3s ease;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
         .difficulty-btn:hover {
@@ -728,9 +736,45 @@
         }
 
         .difficulty-description {
-            font-size: 0.85em;
+            font-size: 0.75em;
             color: #00aa22;
-            margin-top: 5px;
+            margin-top: 0;
+            line-height: 1.3;
+        }
+
+        @media (max-width: 600px) {
+            .difficulty-modal {
+                width: 95vw;
+                max-width: 100%;
+                padding: 20px 15px;
+                gap: 10px;
+            }
+
+            .difficulty-modal h2 {
+                font-size: 1.6em;
+                margin-bottom: 8px;
+            }
+
+            .difficulty-modal p {
+                font-size: 0.85em;
+                margin-bottom: 8px;
+            }
+
+            .difficulty-options {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .difficulty-btn {
+                padding: 12px 8px;
+                font-size: 0.95em;
+                min-height: 70px;
+                gap: 3px;
+            }
+
+            .difficulty-description {
+                font-size: 0.7em;
+            }
         }
 
         /* PowerUps Display */
