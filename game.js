@@ -849,13 +849,7 @@ class SpaceInvadersGame {
                     // Play enemy death sound
                     soundManager.playSound('enemyDeath');
                     
-                    // Check for life reward based on difficulty interval
-                    if (this.score >= this.lastLifeRewardScore + this.difficulty.bonusLifeInterval) {
-                        this.lives++;
-                        this.lastLifeRewardScore += this.difficulty.bonusLifeInterval;
-                        soundManager.playSound('bonusLife');
-                        this.createLifeRewardEffect();
-                    }
+
                     
                      // Randomly drop powerups (20% chance, max 4 per wave, max 4 on screen)
                     if (Math.random() < 0.2 && this.powerupsDroppedThisWave < 4 && this.powerUps.length < 4) {
