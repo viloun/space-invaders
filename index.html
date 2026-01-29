@@ -631,11 +631,15 @@
         /* Hide leaderboard on mobile */
         @media (max-width: 1024px) {
             .show-leaderboard-btn {
-                display: none !important;
+                display: inline-block !important;
             }
 
             .leaderboard {
                 display: none !important;
+            }
+
+            .leaderboard.show {
+                display: block !important;
             }
         }
 
@@ -841,10 +845,10 @@
             .sound-toggle-btn,
             .show-leaderboard-btn,
             .show-statistics-btn {
-                padding: 8px 12px;
-                font-size: 0.85em;
+                padding: 6px 10px;
+                font-size: 0.75em;
                 flex: 1;
-                min-width: 100px;
+                min-width: 80px;
             }
 
             .leaderboard {
