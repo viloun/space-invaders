@@ -1173,14 +1173,8 @@ class SpaceInvadersGame {
             for (let type in this.powerUpManager.activePowerUps) {
                 const remaining = Math.ceil(this.powerUpManager.getRemainingTime(type) / 1000);
                 activePowerUps.push(`${POWERUP_TYPES[type].icon} ${remaining}s`);
-            }
-            powerupDisplay.textContent = activePowerUps.length > 0 ? activePowerUps.join('  ') : '';
         }
-        
-        // Update powerup count display (total collected)
-        const powerupCountDisplay = document.getElementById('powerupCount');
-        if (powerupCountDisplay) {
-            powerupCountDisplay.textContent = this.powerupCollected > 0 ? `POWERUPS COLLECTED: ${this.powerupCollected}` : '';
+        powerupDisplay.textContent = activePowerUps.length > 0 ? activePowerUps.join('  ') : '';
         }
     }
 }
