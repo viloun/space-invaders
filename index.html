@@ -23,14 +23,16 @@
             font-family: 'Courier New', monospace;
             color: #00ff41;
             overflow: hidden;
-            padding-top: 10px;
+            padding: 0;
+            margin: 0;
         }
 
         .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 5px;
+            padding-top: 2px;
         }
 
         h1 {
@@ -174,24 +176,21 @@
         @media (max-width: 1024px) {
             body {
                 min-height: 100vh;
-                padding: 3px;
-                padding-top: 5px;
+                padding: 0;
+                margin: 0;
                 overflow-y: auto;
                 align-items: flex-start;
             }
 
             .game-container {
-                gap: 2px;
+                gap: 1px;
                 width: 100%;
-                padding-bottom: 140px;
-                padding-top: 2px;
+                padding-bottom: 130px;
+                padding-top: 0;
             }
 
             h1 {
-                font-size: 1.5em;
-                margin-bottom: 3px;
-                margin-top: 0;
-                padding: 0;
+                display: none;
             }
 
             canvas {
@@ -260,8 +259,8 @@
         /* Touch Controls for Mobile */
         .touch-controls {
             display: none;
-            position: absolute;
-            bottom: 10px;
+            position: fixed;
+            bottom: 0;
             width: 100%;
             height: 80px;
             z-index: 50;
@@ -787,21 +786,18 @@
 
         @media (max-width: 600px) {
             body {
-                padding: 2px;
-                padding-top: 3px;
+                padding: 0;
+                margin: 0;
             }
 
             .game-container {
-                gap: 1px;
-                padding-bottom: 110px;
-                padding-top: 1px;
+                gap: 0;
+                padding-bottom: 100px;
+                padding-top: 0;
             }
 
             h1 {
-                font-size: 1.2em;
-                margin-bottom: 1px;
-                margin-top: 0;
-                padding: 0;
+                display: none;
             }
 
             .difficulty-modal {
