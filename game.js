@@ -1555,12 +1555,9 @@ window.addEventListener('load', () => {
     window.DIFFICULTIES = DIFFICULTIES;
     
     updateLeaderboardDisplay();
-    const scores = highScoreManager.getScores();
-    if (scores.length > 0) {
-        document.getElementById('leaderboard').style.display = 'block';
-    } else {
-        document.getElementById('showLeaderboardBtn').style.display = 'block';
-    }
+    // Always hide leaderboard on page load and show button instead
+    document.getElementById('leaderboard').classList.remove('show');
+    document.getElementById('showLeaderboardBtn').style.display = 'inline-block';
     
     // Show difficulty selection modal instead of starting game immediately
     document.getElementById('difficultyModal').classList.add('show');
