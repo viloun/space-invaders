@@ -950,9 +950,23 @@
             /* Hide non-essential info on mobile to save space */
             .bullet-level-display,
             .powerup-count-display,
-            .powerups-display,
             .controls {
                 display: none !important;
+            }
+
+            .powerups-display {
+                position: fixed;
+                bottom: 85px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 0.8em;
+                z-index: 49;
+                background: rgba(10, 14, 39, 0.9);
+                padding: 6px 12px;
+                border-radius: 5px;
+                border: 1px solid #ff0080;
+                display: block !important;
+                min-height: auto;
             }
         }
 
