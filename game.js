@@ -1543,9 +1543,17 @@ function toggleLeaderboard() {
     
     if (leaderboard.classList.contains('show')) {
         leaderboard.classList.remove('show');
+        // Resume game if it was paused for leaderboard
+        if (window.currentGame && window.currentGame.isPaused && window.currentGame.state === GAME_STATE.PLAYING) {
+            window.currentGame.togglePause();
+        }
     } else {
         updateLeaderboardDisplay();
         leaderboard.classList.add('show');
+        // Pause game when opening leaderboard during gameplay
+        if (window.currentGame && window.currentGame.state === GAME_STATE.PLAYING && !window.currentGame.isPaused) {
+            window.currentGame.togglePause();
+        }
     }
 }
 
@@ -1566,8 +1574,8 @@ window.addEventListener('load', () => {
 // Start game with selected difficulty
 function startGame(difficulty) {
     document.getElementById('difficultyModal').classList.remove('show');
-    // Hide leaderboard button and modal while game is playing
-    document.getElementById('showLeaderboardBtn').style.display = 'none';
+    // Keep leaderboard button visible during gameplay - it will pause game when clicked
+    document.getElementById('showLeaderboardBtn').style.display = 'inline-block';
     document.getElementById('leaderboard').classList.remove('show');
     window.currentGame = new SpaceInvadersGame(difficulty);
 }
